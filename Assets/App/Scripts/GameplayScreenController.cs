@@ -13,6 +13,9 @@ namespace TicTacToe
     public class GameplayScreenController : MonoBehaviour
     {
         [SerializeField] GameObject boardPrefab;
+
+        [Header("Player UI")] 
+        [SerializeField] PlayerTurnView[] playerTurnViews;
         
         [Header("Buttons")]
         [SerializeField] Button restartButton;
@@ -21,6 +24,7 @@ namespace TicTacToe
         [SerializeField] GameObject winnerPanel;
         [SerializeField] TMP_Text winnerText;
 
+        
         GameStateJson savedGameState;
         
         
@@ -31,6 +35,11 @@ namespace TicTacToe
             restartButton.gameObject.SetActive(false);
             winnerText.gameObject.SetActive(false);
             winnerPanel.gameObject.SetActive(false);
+
+            foreach (var playerTurnView in playerTurnViews)
+            {
+                playerTurnView.Hide();
+            }
         }
 
         /// <summary>
@@ -39,6 +48,12 @@ namespace TicTacToe
         /// <param name="playerConfigs">Participating player configuration data. First index player goes first</param>
         public async UniTask RunAsync(PlayerConfig[] playerConfigs)
         {
+            // init player turn views
+            for (int i = 0; i < playerTurnViews.Length; i++)
+            {
+                playerTurnViews[i].Init(playerConfigs[i]);
+            }
+            
             // saved data gets first player priority
             var startingPlayer = savedGameState != null ? 
                 (PlayerType)savedGameState.PlayerTurnIndex : 
@@ -80,8 +95,12 @@ namespace TicTacToe
             {
                 SaveBoardState(playerTurn, board);
                 
+                playerTurnViews[(int)playerTurn].Display();
+                
                 await board.WaitForTurn(playerTurn);
 
+                playerTurnViews[(int)playerTurn].Hide();
+                
                 winner = board.GetWinner();
 
                 if (board.IsTie())

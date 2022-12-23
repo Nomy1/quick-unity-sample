@@ -14,7 +14,7 @@ namespace TicTacToe
     {
         [SerializeField] PlayerConfig[] playerConfigs;
         
-        void Start()
+        private void Start()
         {
             // Bootload game from here
             RunGameplayScreenAsync().Forget();

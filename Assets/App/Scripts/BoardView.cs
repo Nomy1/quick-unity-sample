@@ -113,7 +113,7 @@ namespace TicTacToe
             return PlayerType.None;
         }
 
-        PlayerType GetLineOwner(params TileView[] lineTiles)
+        private PlayerType GetLineOwner(params TileView[] lineTiles)
         {
             Assert.IsTrue(lineTiles.Length == 3, "Only 3x3 boards supported");
             
