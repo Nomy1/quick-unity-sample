@@ -1,6 +1,7 @@
 using System;
 using Cysharp.Threading.Tasks;
 using UnityEngine;
+using UnityEngine.Assertions;
 using UnityEngine.SceneManagement;
 
 namespace TicTacToe
@@ -11,6 +12,8 @@ namespace TicTacToe
     /// </summary>
     public class AppController : MonoBehaviour
     {
+        [SerializeField] PlayerConfig[] playerConfigs;
+        
         void Start()
         {
             // Bootload game from here
@@ -22,12 +25,19 @@ namespace TicTacToe
         /// </summary>
         async UniTask RunGameplayScreenAsync()
         {
+            Assert.IsTrue(playerConfigs.Length == 2, "Game requires two players");
+            
             // load gameplay scene and keep bootloader scene alive for scripts that we want to keep alive for app's duration
-            await SceneManager.LoadSceneAsync("GameplayScene", LoadSceneMode.Additive);
-
-            // run gameplay scene logic
-            var sceneController = FindObjectOfType<GameplayController>();
-            await sceneController.RunAsync();
+            const string SceneName = "GameplayScene";
+            await SceneManager.LoadSceneAsync(SceneName, LoadSceneMode.Additive);
+            Scene gameplayScene = SceneManager.GetSceneByName(SceneName);
+            SceneManager.SetActiveScene(gameplayScene);
+            
+            var sceneController = FindObjectOfType<GameplayScreenController>();
+            
+            // run scene logic
+            sceneController.Load();
+            await sceneController.RunAsync(playerConfigs);
             
             throw new NotSupportedException("Game is not supposed to end");
         }
