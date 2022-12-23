@@ -5,7 +5,7 @@ using UnityEngine.EventSystems;
 
 namespace TicTacToe
 {
-    public class TileView : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler, IPointerDownHandler, IPointerUpHandler, IPointerClickHandler
+    public class TileView : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler, IPointerClickHandler
     {
         [SerializeField] MeshRenderer meshRenderer;
         
@@ -17,25 +17,20 @@ namespace TicTacToe
         [SerializeField] float mouseEnterScaleAmount = 1.1f;
         [SerializeField] float mouseEnterScaleSpeed = 0.3f;
         [SerializeField] float mouseExitScaleSpeed = 0.3f;
-        
-        public event Action OnMouseEnter = () => { };
-        public event Action OnMouseExit = () => { };
-        public event Action OnMouseDown = () => { };
-        public event Action OnMouseUp = () => { };
+
         public event Action OnMouseClick = () => { };
         
         // tile begins with no owner
         public PlayerType OwnerPlayer = PlayerType.None;
         
-        PlayerType turnPlayer;
-        PlayerConfig turnOwnerConfig;
-        Tween tween;
-        Color defaultColor;
-        float defaultScale;
-        bool isAllowInteraction;
+        private PlayerType turnPlayer;
+        private PlayerConfig turnOwnerConfig;
+        private Color defaultColor;
+        private float defaultScale;
+        private bool isAllowInteraction;
         
         
-        void Awake()
+        private void Awake()
         {
             // keep track of initial values so we can reset to correct values when needed
             defaultColor = meshRenderer.material.color;
@@ -49,15 +44,29 @@ namespace TicTacToe
             isAllowInteraction = true;
         }
         
+        public void SetOwner(PlayerConfig playerConfig, PlayerType playerType)
+        {
+            turnOwnerConfig = playerConfig;
+            OwnerPlayer = playerType;
+            isAllowInteraction = false;
+
+            SetOwnerColor(playerConfig);
+            transform.DOLocalRotate(new Vector3(0, playerSelectRotationDeg[(int)playerType], 0f), spinSpeed).SetEase(Ease.OutBounce);
+        }
+
+        private void SetOwnerColor(PlayerConfig playerConfig)
+        {
+            meshRenderer.material.color = playerConfig.TeamColor;
+            transform.DOScale(defaultScale * mouseEnterScaleAmount, mouseEnterScaleSpeed).SetEase(Ease.OutBounce);
+        }
+        
         #region Interaction Events
         void IPointerEnterHandler.OnPointerEnter(PointerEventData eventData)
         {
             if (!isAllowInteraction)
                 return;
             
-            OnMouseEnter();
-            meshRenderer.material.color = turnOwnerConfig.TeamColor;
-            tween = transform.DOScale(defaultScale * mouseEnterScaleAmount, mouseEnterScaleSpeed).SetEase(Ease.OutBounce);
+            SetOwnerColor(turnOwnerConfig);
         }
 
         void IPointerExitHandler.OnPointerExit(PointerEventData eventData)
@@ -65,25 +74,8 @@ namespace TicTacToe
             if (!isAllowInteraction)
                 return;
             
-            OnMouseExit();
             meshRenderer.material.color = defaultColor;
-            tween = transform.DOScale(defaultScale, mouseExitScaleSpeed).SetEase(Ease.OutBounce);
-        }
-
-        void IPointerDownHandler.OnPointerDown(PointerEventData eventData)
-        {
-            if (!isAllowInteraction)
-                return;
-            
-            OnMouseDown();
-        }
-
-        void IPointerUpHandler.OnPointerUp(PointerEventData eventData)
-        {
-            if (!isAllowInteraction)
-                return;
-            
-            OnMouseUp();
+            transform.DOScale(defaultScale, mouseExitScaleSpeed).SetEase(Ease.OutBounce);
         }
 
         void IPointerClickHandler.OnPointerClick(PointerEventData eventData)
@@ -92,11 +84,7 @@ namespace TicTacToe
                 return;
             
             OnMouseClick();
-
-            isAllowInteraction = false;
-            OwnerPlayer = turnPlayer;
-            
-            tween = transform.DOLocalRotate(new Vector3(0, playerSelectRotationDeg[(int)turnPlayer], 0f), spinSpeed).SetEase(Ease.OutBounce);
+            SetOwner(turnOwnerConfig, turnPlayer);
         }
         #endregion
     }

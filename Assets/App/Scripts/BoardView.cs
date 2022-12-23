@@ -1,4 +1,5 @@
 using System;
+using System.Linq;
 using Cysharp.Threading.Tasks;
 using UnityEngine;
 using UnityEngine.Assertions;
@@ -14,22 +15,30 @@ namespace TicTacToe
         [SerializeField] TileView[] tileViews;
         
         PlayerConfig[] playerConfigs;
-        
-        public enum Winner
-        {
-            None,
-            Player1,
-            Player2,
-            Tie,
-        }
-        
+
         /// <summary>
         /// Initialize board with participating players
         /// </summary>
         /// <param name="playerConfigs">Participating player configurations</param>
-        public void Init(PlayerConfig[] playerConfigs)
+        public void Init(PlayerConfig[] playerConfigs, GameStateJson gameState = null)
         {
             this.playerConfigs = playerConfigs;
+
+            // load game state
+            if (gameState != null)
+            {
+                for(int i=0; i<gameState.BoardSaveState.Length; i++)
+                {
+                    var owner = (PlayerType)gameState.BoardSaveState[i];
+
+                    // only set tiles with an owner
+                    if (owner != PlayerType.None)
+                    {
+                        var config = owner == PlayerType.Player1 ? playerConfigs[0] : playerConfigs[1];
+                        tileViews[i].SetOwner(config, owner);
+                    }
+                }
+            }
         }
 
         /// <summary>
@@ -115,6 +124,24 @@ namespace TicTacToe
             }
 
             return PlayerType.None;
+        }
+        
+        /// <summary>
+        /// Is the game a tie?
+        /// </summary>
+        public bool IsTie()
+        {
+            return tileViews.All(t => t.OwnerPlayer != PlayerType.None);
+        }
+        
+        public int[] GetBoardState()
+        {
+            return tileViews.Select(t => (int)t.OwnerPlayer).ToArray();
+        }
+
+        public int[] GetEmptyBoardState()
+        {
+            return tileViews.Select(t => -1).ToArray();
         }
     }
 }
